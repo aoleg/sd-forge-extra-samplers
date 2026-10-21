@@ -4,7 +4,7 @@ from modules_forge.packages.k_diffusion.sampling import to_d
 
 from tqdm.auto import trange
 
-from lib_es.utils import dy_sampling_step, sampler_metadata
+from lib_es.utils import churn_gamma, dy_sampling_step, is_rf_model, sampler_metadata
 
 
 @sampler_metadata("Euler Dy Negative")
@@ -23,10 +23,21 @@ def sample_euler_dy_negative(
 ):
     extra_args = {} if extra_args is None else extra_args
     s_in = x.new_ones([x.shape[0]])
+    rf = is_rf_model(model)
 
+    # NOTE: deliberately NOT on substep_schedule, unlike euler_dy.
+    #
+    # On the substep this replaces the Euler update with `x = -x - d * dt`, which is only
+    # survivable while the latent is still mostly noise. Rescheduling it below sigma 0.5 -
+    # the fix applied to the non-negative SMEA/Dy samplers - negates a nearly-final latent
+    # and returns an inverted palette instead of an image. Same coupling as
+    # euler_smea_dy_negative: the substep and the sign flip cannot move independently.
     for i in trange(len(sigmas) - 1, disable=disable):
-        gamma = max(s_churn / (len(sigmas) - 1), 2**0.5 - 1) if s_tmin <= sigmas[i] <= s_tmax else 0.0
-        eps = torch.randn_like(x) * s_noise
+        if rf:
+            gamma = 0.0
+        else:
+            gamma = churn_gamma(model, s_churn, len(sigmas) - 1, sigmas[i], s_tmin, s_tmax)
+            eps = torch.randn_like(x) * s_noise
         sigma_hat = sigmas[i] * (gamma + 1)
         dt = sigmas[i + 1] - sigma_hat
 

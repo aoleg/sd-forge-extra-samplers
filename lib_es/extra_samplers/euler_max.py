@@ -5,7 +5,7 @@ from modules_forge.packages.k_diffusion.sampling import to_d
 
 from tqdm.auto import trange
 
-from ..utils import sampler_metadata
+from ..utils import churn_gamma, is_rf_model, sampler_metadata
 
 
 @sampler_metadata("Euler Max")
@@ -24,9 +24,13 @@ def sample_euler_max(
 ):
     extra_args = {} if extra_args is None else extra_args
     s_in = x.new_ones([x.shape[0]])
+    rf = is_rf_model(model)
     for i in trange(len(sigmas) - 1, disable=disable):
-        gamma = max(s_churn / (len(sigmas) - 1), 2**0.5 - 1) if s_tmin <= sigmas[i] <= s_tmax else 0.0
-        eps = torch.randn_like(x) * s_noise
+        if rf:
+            gamma = 0.0
+        else:
+            gamma = churn_gamma(model, s_churn, len(sigmas) - 1, sigmas[i], s_tmin, s_tmax)
+            eps = torch.randn_like(x) * s_noise
         sigma_hat = sigmas[i] * (gamma + 1)
 
         if gamma > 0:

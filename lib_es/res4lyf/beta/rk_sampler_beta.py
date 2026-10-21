@@ -21,8 +21,7 @@ except ImportError:
 from typing import Optional, Callable, Tuple, List, Any
 import copy
 
-from comfy.model_sampling import EPS
-import comfy
+from backend.misc.image_resize import bislerp
 
 from ..res4lyf import RESplain
 from ..helper import ExtraOptions, FrameWeightsManager
@@ -245,14 +244,14 @@ def sample_rk_beta(
     state_info = {} if state_info is None else state_info
     state_info_out = {} if state_info_out is None else state_info_out
 
-    VE_MODEL = isinstance(model.inner_model.inner_model.model_sampling, EPS)
+    VE_MODEL = getattr(model.inner_model.inner_model.model_sampling, "prediction_type", None) == "epsilon"
 
     RENOISE = False
     if "raw_x" in state_info and sampler_mode in {"resample", "unsample"}:
         if x.shape == state_info["raw_x"].shape:
             x = state_info["raw_x"].to(work_device)  # clone()
         else:
-            denoised = comfy.utils.bislerp(state_info["denoised"], x.shape[-1], x.shape[-2])
+            denoised = bislerp(state_info["denoised"], x.shape[-1], x.shape[-2])
             x = denoised.to(x)
             RENOISE = True
         RESplain("Continuing from raw latent from previous sampler.", debug=False)
@@ -819,7 +818,7 @@ def sample_rk_beta(
                     else:
                         data_prev_ = torch.stack(
                             [
-                                comfy.utils.bislerp(data_prev_item, x.shape[-1], x.shape[-2])
+                                bislerp(data_prev_item, x.shape[-1], x.shape[-2])
                                 for data_prev_item in state_info["data_prev_"]
                             ]
                         )
