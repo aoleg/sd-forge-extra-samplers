@@ -1,3 +1,4 @@
+from lib_es.extra_samplers.adaptive_pc import sample_adaptive_pc
 from lib_es.extra_samplers.adaptive_progressive import sample_adaptive_progressive
 from lib_es.extra_samplers.euler_dy import sample_euler_dy
 from lib_es.extra_samplers.euler_dy_negative import sample_euler_dy_negative
@@ -45,6 +46,7 @@ from lib_es.extra_samplers.res4lyf_beta import (
 from lib_es.extra_samplers.ssprk3 import sample_ssprk3
 
 __sampler_funcs__ = [
+    sample_adaptive_pc,
     sample_adaptive_progressive,
     sample_deis,
     sample_euler_max,

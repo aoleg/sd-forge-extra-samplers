@@ -43,6 +43,21 @@ def xyz_support(cache: dict):
             apply_field(consts.GE_USE_TIMESTEP_ADAPTIVE_GAMMA, is_bool=True),
         ),
         xyz_grid.AxisOption("[Langevin Euler] Langevin Strength", float, apply_field(consts.LANGEVIN_STRENGTH)),
+        xyz_grid.AxisOption("[SA-Solver] Eta", float, apply_field(consts.SA_SOLVER_ETA)),
+        xyz_grid.AxisOption("[SA-Solver] Stochastic Start", float, apply_field(consts.SA_SOLVER_STOCHASTIC_START)),
+        xyz_grid.AxisOption("[SA-Solver] Stochastic End", float, apply_field(consts.SA_SOLVER_STOCHASTIC_END)),
+        xyz_grid.AxisOption("[Adaptive PC] Order", int, apply_field(consts.APC_ORDER)),
+        xyz_grid.AxisOption(
+            "[Adaptive PC] Step Mode",
+            str,
+            apply_field(consts.APC_MODE),
+            choices=lambda: ["fixed", "budget"],
+        ),
+        xyz_grid.AxisOption(
+            "[Adaptive PC] Use Corrector",
+            str,
+            apply_field(consts.APC_USE_CORRECTOR, is_bool=True),
+        ),
     ]
 
     xyz_grid.axis_options.extend(extra_axis_options)

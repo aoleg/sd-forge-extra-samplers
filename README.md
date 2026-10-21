@@ -9,6 +9,7 @@ This repository provides additional samplers to the Forge Neo WebUI.
 ## Features
 
 - Additional samplers integrated into the Forge WebUI.
+  - Adaptive PC (budget mode is experimental)
   - Adaptive Progressive (Experimental)
   - Euler Max
   - Euler Negative
@@ -36,6 +37,7 @@ This repository provides additional samplers to the Forge Neo WebUI.
     - res_4s
     - res_5s
     - res_6s
+  - SA-Solver (adjustable stochastic strength and window)
   - SSPRK3
  
 - Additional Schedulers
@@ -43,6 +45,22 @@ This repository provides additional samplers to the Forge Neo WebUI.
   - Beta 57
 
 Adds a new extension accordian titled "Extra Samplers" to allow adjusting certain samplers.
+
+### SA-Solver stochastic strength
+
+The **SA-Solver** accordion sets the stochastic strength (eta) of SA-Solver and the part of the noise range where it applies, given as a fraction of the model's timestep range. The defaults, eta 1.0 between 0.2 and 0.8, are the fixed values ComfyUI uses, and they give the same result as before these controls existed. Eta 0 runs SA-Solver as an ODE.
+
+The authors of adaptive-step-samplers measured eta 1.6 to 1.8 as the useful range on a flow-matching DiT at 10 steps: it adds fine texture at some cost to large-scale geometry, and it also changes the composition. Above 1.8, fine structures start to turn into scribble. Widening the window to 0.1-0.9 cost geometry and added no texture.
+
+### Adaptive PC
+
+A variable-step Adams predictor-corrector that uses one model call per step. The gap between the predicted and the corrected state is an estimate of the local error that costs no extra model call.
+
+* **Fixed** step mode follows the scheduler's sigmas. Order 1 to 4 sets how many past steps the predictor uses.
+* **Budget** step mode (experimental) keeps the number of steps but moves them along the schedule to where the error estimate is high. It does not land on the scheduler's exact sigmas. Its tolerances and limits are in the nested **Budget Mode** accordion. The authors found that it beat a uniform schedule but lost to ComfyUI's `normal` scheduler, so treat it as an experiment.
+* **Use Corrector** off runs the predictor only.
+
+Both samplers have X/Y/Z plot axes: `[SA-Solver] Eta`, `[SA-Solver] Stochastic Start`, `[SA-Solver] Stochastic End`, `[Adaptive PC] Order`, `[Adaptive PC] Step Mode` and `[Adaptive PC] Use Corrector`.
 
 ## Installation
 
@@ -104,6 +122,8 @@ Classic, and the projects credited below.
   port. Files under `lib_es/res4lyf` include per-file AGPLv3 attribution
   headers, and `lib_es/res4lyf/PORTING_NOTES.md` documents Forge-specific
   changes.
+
+- [YakovSava / adaptive-step-samplers](https://github.com/YakovSava/adaptive-step-samplers) (MIT, Iakov Savelev and Yehor Yuzvynsky): Adaptive PC and the SA-Solver eta and window controls. The ported Adams predictor-corrector code and its MIT license are in `lib_es/extra_samplers/utils/adams_pc`.
 
 If an attribution is incomplete or incorrect, please open an issue or pull
 request so it can be corrected.

@@ -11,6 +11,7 @@ from lib_es.extra_samplers.utils.sa_solver import (
     get_tau_interval_func,
 )
 from lib_es.utils import sampler_metadata, default_noise_sampler
+import lib_es.const as consts
 
 
 @torch.no_grad()
@@ -43,10 +44,16 @@ def sample_sa_solver(
     lambdas = sigma_to_half_log_snr(sigmas, model_sampling=model_sampling)
 
     if tau_func is None:
-        # Use default interval for stochastic sampling
-        start_sigma = model_sampling.percent_to_sigma(0.2)
-        end_sigma = model_sampling.percent_to_sigma(0.8)
-        tau_func = get_tau_interval_func(start_sigma, end_sigma, eta=1.0)
+        # Stochastic strength and window from the Extra Samplers accordion; the defaults
+        # (eta 1.0 inside 20-80 %) are the fixed values ComfyUI uses.
+        # Exposed after https://github.com/YakovSava/adaptive-step-samplers (MIT)
+        p = getattr(model, "p", None)
+        eta = getattr(p, consts.SA_SOLVER_ETA, consts.SA_SOLVER_DEFAULT_ETA)
+        start = getattr(p, consts.SA_SOLVER_STOCHASTIC_START, consts.SA_SOLVER_START_PERCENT)
+        end = getattr(p, consts.SA_SOLVER_STOCHASTIC_END, consts.SA_SOLVER_END_PERCENT)
+        start_sigma = model_sampling.percent_to_sigma(start)
+        end_sigma = model_sampling.percent_to_sigma(end)
+        tau_func = get_tau_interval_func(start_sigma, end_sigma, eta=eta)
 
     max_used_order = max(predictor_order, corrector_order)
     x_pred = x  # x: current state, x_pred: predicted next state
