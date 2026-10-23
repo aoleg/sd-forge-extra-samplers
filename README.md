@@ -68,6 +68,10 @@ A variable-step Adams predictor-corrector that uses one model call per step. The
 
 Both samplers have X/Y/Z plot axes: `[SA-Solver] Eta`, `[SA-Solver] Stochastic Start`, `[SA-Solver] Stochastic End`, `[Adaptive PC] Order`, `[Adaptive PC] Step Mode` and `[Adaptive PC] Use Corrector`.
 
+### RES4LYF SDE seed
+
+All RES4LYF SDE samplers now take their noise from the image seed. Before this, every seed got the same SDE noise and only the initial latent changed, so RES4LYF SDE images made before this change do not reproduce with the same seed. The ODE flavors are not affected.
+
 ## Installation
 
 ### Clone from Git

@@ -59,9 +59,18 @@ added:
   `transformer_options` dictionaries before writing regional-conditioning
   defaults.
 
+## Cherry-picked Upstream Fixes
+
+These upstream commits (all before upstream `56e44755`, v1.2.0) are applied by hand on top of the `119679d8` port; the rest of the files stay at `119679d8`.
+
+- `1f03243` and `a91beac` in `beta/rk_noise_sampler_beta.py`: the SDE seed selection. Before them, `noise_seed=-1` fell through an `if`/`if`/`else` chain to `seed = -1`, so the SDE noise was the same for every image seed. `1f03243` also builds the primary noise sampler when only the substep sampler is `fractal`.
+- `0d753fa` in `beta/rk_coefficients_beta.py`: multistep samplers fall back to `ddim`, not `euler`, below sigma 0.1.
+
 ## Wrapper Code
 
 `lib_es/extra_samplers/res4lyf_beta.py` is Forge integration code, not a direct
 copy of an upstream RES4LYF file. It adapts Forge denoiser/model objects to the
 subset of ComfyUI-style interfaces expected by the retained RES4LYF sampler
 implementation.
+
+The wrapper passes `noise_seed = p.seeds[0] + 1`, as RES4LYF's SharkSampler does with its seed. RES4LYF draws its own SDE noise and ignores Forge's noise sampler, and its fallback, `torch.initial_seed() + 1`, is not the image seed with every Forge RNG source.

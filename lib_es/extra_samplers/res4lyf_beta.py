@@ -54,6 +54,14 @@ def _sample_res4lyf(model, x, sigmas, extra_args, callback, disable, rk_type, et
     if eta_substep is not None:
         kwargs["eta_substep"] = eta_substep
 
+    p = getattr(model, "p", None)
+    seeds = getattr(p, "seeds", None)
+    if seeds:
+        # RES4LYF draws its own SDE noise and ignores Forge's noise sampler; without a seed it
+        # falls back to torch.initial_seed(), which is not the image seed for every RNG source.
+        # +1 as in RES4LYF's SharkSampler, so the SDE noise is not the initial latent noise.
+        kwargs["noise_seed"] = int(seeds[0]) + 1
+
     return rk_sampler_beta.sample_rk_beta(
         _ForgeDenoiser(model, x),
         x,

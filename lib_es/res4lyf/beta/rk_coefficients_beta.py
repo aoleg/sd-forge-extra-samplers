@@ -1897,7 +1897,7 @@ def get_rk_methods_beta(
                 rk_type = multistep_initial_sampler if multistep_initial_sampler else rk_type
         else:
             # rk_type = "res_2s"
-            rk_type = "euler" if sigma < 0.1 else "res_2s"
+            rk_type = "ddim" if sigma < 0.1 else "res_2s"
             rk_type = multistep_fallback_sampler if multistep_fallback_sampler else rk_type
 
     if rk_type[-2:] == "3m":  # multistep method
@@ -1916,7 +1916,7 @@ def get_rk_methods_beta(
                 rk_type = multistep_initial_sampler if multistep_initial_sampler else rk_type
         else:
             # rk_type = "res_3s"
-            rk_type = "euler" if sigma < 0.1 else "res_3s"
+            rk_type = "ddim" if sigma < 0.1 else "res_3s"
             rk_type = multistep_fallback_sampler if multistep_fallback_sampler else rk_type
 
     if rk_type[-2:] == "4m":  # multistep method
@@ -1939,7 +1939,7 @@ def get_rk_methods_beta(
                 rk_type = multistep_initial_sampler if multistep_initial_sampler else rk_type
         else:
             # rk_type = "res_4s_strehmel_weiner"
-            rk_type = "euler" if sigma < 0.1 else "res_4s_strehmel_weiner"
+            rk_type = "ddim" if sigma < 0.1 else "res_4s_strehmel_weiner"
             rk_type = multistep_fallback_sampler if multistep_fallback_sampler else rk_type
 
     if rk_type[-3] == "h" and rk_type[-1] == "s":  # hybrid method
