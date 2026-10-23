@@ -42,6 +42,7 @@ from lib_es.extra_samplers.res4lyf_beta import (
     sample_res4lyf_res_3s_ode,
     sample_res4lyf_res_5s_ode,
     sample_res4lyf_res_6s_ode,
+    res4lyf_implicit_samplers,
 )
 from lib_es.extra_samplers.ssprk3 import sample_ssprk3
 
@@ -80,6 +81,7 @@ __sampler_funcs__ = [
     sample_res4lyf_res_3s_ode,
     sample_res4lyf_res_5s_ode,
     sample_res4lyf_res_6s_ode,
+    *res4lyf_implicit_samplers,
     sample_sa_solver,
     sample_sa_solver_stable,
     sample_seeds_2,

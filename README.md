@@ -40,6 +40,15 @@ This repository provides additional samplers to the Forge Neo WebUI.
     - res_4s
     - res_5s
     - res_6s
+  - RES4LYF's implicit Samplers in both SDE and ODE flavors (adjustable implicit steps)
+    - radau_ia_2s
+    - radau_ia_3s
+    - radau_iia_2s
+    - radau_iia_3s
+    - gauss-legendre_2s
+    - gauss-legendre_3s
+    - lobatto_iiic_2s
+    - crouzeix_2s
   - SA Solver (adjustable stochastic strength and window)
   - SA Solver Stable
   - SEEDS2
@@ -67,6 +76,12 @@ A variable-step Adams predictor-corrector that uses one model call per step. The
 * **Use Corrector** off runs the predictor only.
 
 Both samplers have X/Y/Z plot axes: `[SA-Solver] Eta`, `[SA-Solver] Stochastic Start`, `[SA-Solver] Stochastic End`, `[Adaptive PC] Order`, `[Adaptive PC] Step Mode` and `[Adaptive PC] Use Corrector`.
+
+### RES4LYF implicit samplers
+
+The radau, gauss-legendre, lobatto and crouzeix entries run RES4LYF's fully and diagonally implicit Runge-Kutta tableaus. With **Implicit Steps** at 0 (the **RES4LYF Implicit** accordion) each tableau runs once per step, which is what ClownsharKSampler does by default. Each implicit step evaluates the stages again: one step takes radau_ia_2s from 2 to 3 model calls per step, and radau_iia_3s from 4 to 7. The X/Y/Z plot axis is `[RES4LYF Implicit] Implicit Steps`.
+
+The SDE flavors use eta 0.5, the ODE flavors eta 0, as the `res` entries do.
 
 ### RES4LYF SDE seed
 

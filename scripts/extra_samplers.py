@@ -8,6 +8,7 @@ from modules.script_callbacks import on_ui_settings
 from modules.shared import OptionInfo, opts
 
 import lib_es.const as consts
+from lib_es.extra_samplers.res4lyf_beta import IMPLICIT_SAMPLER_NAMES
 from lib_es.xyz import xyz_support
 from lib_es.samplers import add_extra_samplers
 from lib_es.schedulers import add_schedulers
@@ -299,6 +300,25 @@ class ExtraSamplerExtension(scripts.Script):
                         inputs=[component],
                     )
 
+            with gr.Accordion(label="RES4LYF Implicit", open=False):
+                gr.Markdown(
+                    "Implicit iterations for the RES4LYF radau, gauss-legendre, lobatto and crouzeix samplers. "
+                    "0 runs the tableau once per step, as ClownsharKSampler does by default. "
+                    "Each iteration evaluates the stages again: one iteration takes radau_ia_2s from 2 to 3 "
+                    "model calls per step, and radau_iia_3s from 4 to 7."
+                )
+                res4lyf_implicit_steps = gr.Slider(
+                    minimum=0,
+                    maximum=10,
+                    step=1,
+                    value=from_setting_or_default(consts.RES4LYF_IMPLICIT_STEPS, consts.RES4LYF_DEFAULT_IMPLICIT_STEPS),
+                    label="Implicit Steps",
+                )
+                res4lyf_implicit_steps.change(
+                    fn=lambda value: on_change_update_setting(consts.RES4LYF_IMPLICIT_STEPS, value),
+                    inputs=[res4lyf_implicit_steps],
+                )
+
         return [
             euler_a_end,
             dpm_2m_end,
@@ -323,6 +343,7 @@ class ExtraSamplerExtension(scripts.Script):
             apc_max_ratio,
             apc_spread,
             apc_smoothing,
+            res4lyf_implicit_steps,
         ]
 
     def get_values_and_apply(self, p: StableDiffusionProcessing, values: dict):
@@ -357,6 +378,7 @@ class ExtraSamplerExtension(scripts.Script):
         apc_max_ratio: float,
         apc_spread: float,
         apc_smoothing: float,
+        res4lyf_implicit_steps: int,
         batch_number: int,
         prompts: list[str],
         seeds: list[int],
@@ -418,6 +440,8 @@ class ExtraSamplerExtension(scripts.Script):
             else:
                 for key in budget_values:
                     self.xyz_cache.pop(key, None)
+        elif p.sampler_name in IMPLICIT_SAMPLER_NAMES:
+            self.get_values_and_apply(p, {consts.RES4LYF_IMPLICIT_STEPS: int(res4lyf_implicit_steps)})
         elif p.scheduler == "beta_57" or p.scheduler == "Beta 57":
             self.get_values_and_apply(
                 p,
@@ -664,6 +688,17 @@ def on_settings():
             "Adaptive PC Smoothing",
             component=gr.Slider,
             component_args={"minimum": 0.0, "maximum": 1.0, "step": 0.05},
+            section=section,
+        ),
+    )
+
+    opts.add_option(
+        consts.RES4LYF_IMPLICIT_STEPS,
+        OptionInfo(
+            consts.RES4LYF_DEFAULT_IMPLICIT_STEPS,
+            "RES4LYF Implicit Steps",
+            component=gr.Slider,
+            component_args={"minimum": 0, "maximum": 10, "step": 1},
             section=section,
         ),
     )

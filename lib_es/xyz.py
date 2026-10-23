@@ -58,6 +58,7 @@ def xyz_support(cache: dict):
             str,
             apply_field(consts.APC_USE_CORRECTOR, is_bool=True),
         ),
+        xyz_grid.AxisOption("[RES4LYF Implicit] Implicit Steps", int, apply_field(consts.RES4LYF_IMPLICIT_STEPS)),
     ]
 
     xyz_grid.axis_options.extend(extra_axis_options)

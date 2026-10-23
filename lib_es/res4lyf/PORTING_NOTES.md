@@ -74,3 +74,5 @@ subset of ComfyUI-style interfaces expected by the retained RES4LYF sampler
 implementation.
 
 The wrapper passes `noise_seed = p.seeds[0] + 1`, as RES4LYF's SharkSampler does with its seed. RES4LYF draws its own SDE noise and ignores Forge's noise sampler, and its fallback, `torch.initial_seed() + 1`, is not the image seed with every Forge RNG source.
+
+The implicit entries pass the tableau name as `rk_type` and `implicit_steps_full` from the RES4LYF Implicit accordion. ClownsharKSampler does the same through `process_sampler_name()`: it sets `implicit_sampler_name` to the tableau, which `sample_rk_beta` then uses as `rk_type`.

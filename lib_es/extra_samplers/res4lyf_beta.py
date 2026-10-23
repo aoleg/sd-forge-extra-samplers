@@ -1,5 +1,6 @@
 import torch
 
+import lib_es.const as consts
 from lib_es.utils import sampler_metadata
 
 
@@ -45,7 +46,9 @@ class _ForgeDenoiser:
         return getattr(self._model, name)
 
 
-def _sample_res4lyf(model, x, sigmas, extra_args, callback, disable, rk_type, eta=None, eta_substep=None):
+def _sample_res4lyf(
+    model, x, sigmas, extra_args, callback, disable, rk_type, eta=None, eta_substep=None, implicit=False
+):
     from lib_es.res4lyf.beta import rk_sampler_beta
 
     kwargs = {"rk_type": rk_type}
@@ -61,6 +64,10 @@ def _sample_res4lyf(model, x, sigmas, extra_args, callback, disable, rk_type, et
         # falls back to torch.initial_seed(), which is not the image seed for every RNG source.
         # +1 as in RES4LYF's SharkSampler, so the SDE noise is not the initial latent noise.
         kwargs["noise_seed"] = int(seeds[0]) + 1
+    if implicit:
+        kwargs["implicit_steps_full"] = int(
+            getattr(p, consts.RES4LYF_IMPLICIT_STEPS, consts.RES4LYF_DEFAULT_IMPLICIT_STEPS)
+        )
 
     return rk_sampler_beta.sample_rk_beta(
         _ForgeDenoiser(model, x),
@@ -74,13 +81,13 @@ def _sample_res4lyf(model, x, sigmas, extra_args, callback, disable, rk_type, et
     ).to(dtype=x.dtype, device=x.device)
 
 
-def _make_res_sampler(rk_type, ode=False):
+def _make_res_sampler(rk_type, ode=False, implicit=False):
     def sampler(model, x, sigmas, extra_args=None, callback=None, disable=None):
         eta = 0.0 if ode else None
         eta_substep = 0.0 if ode else None
-        return _sample_res4lyf(model, x, sigmas, extra_args, callback, disable, rk_type, eta, eta_substep)
+        return _sample_res4lyf(model, x, sigmas, extra_args, callback, disable, rk_type, eta, eta_substep, implicit)
 
-    sampler.__name__ = f"sample_res4lyf_{rk_type}{'_ode' if ode else ''}"
+    sampler.__name__ = f"sample_res4lyf_{rk_type.replace('-', '_')}{'_ode' if ode else ''}"
     return torch.no_grad()(sampler)
 
 
@@ -145,3 +152,28 @@ sample_res4lyf_res_6s_ode = sampler_metadata(
     {"scheduler": "sgm_uniform"},
     ["res_6s_ode", "res4lyf_res_6s_ode"],
 )(_make_res_sampler("res_6s", ode=True))
+
+# Fully and diagonally implicit tableaus. They run once per step, as ClownsharKSampler does with
+# implicit_steps 0; the RES4LYF Implicit accordion adds full implicit iterations on top.
+IMPLICIT_RK_TYPES = (
+    "radau_ia_2s",
+    "radau_ia_3s",
+    "radau_iia_2s",
+    "radau_iia_3s",
+    "gauss-legendre_2s",
+    "gauss-legendre_3s",
+    "lobatto_iiic_2s",
+    "crouzeix_2s",
+)
+
+res4lyf_implicit_samplers = [
+    sampler_metadata(
+        f"RES4LYF {rk_type}{' ODE' if ode else ''}",
+        {"scheduler": "sgm_uniform"},
+        [f"{rk_type}{'_ode' if ode else ''}", f"res4lyf_{rk_type}{'_ode' if ode else ''}"],
+    )(_make_res_sampler(rk_type, ode=ode, implicit=True))
+    for ode in (False, True)
+    for rk_type in IMPLICIT_RK_TYPES
+]
+
+IMPLICIT_SAMPLER_NAMES = {fn.sampler_name for fn in res4lyf_implicit_samplers}
